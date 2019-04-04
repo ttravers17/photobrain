@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
+
 const path = require('path')
 const url = require('url')
 
@@ -9,12 +10,16 @@ require('dotenv').config({
     path: path.join(__dirname, '..', '..', '.env')
 })
 
+main();
 
-let client_ws = require('./client');
+function main() {
+    // Wait until the app is ready
+    app.once('ready', createWindow)
+    // Handle uploading images
+    ipcMain.on('openFile', handleOpenFile)
+}
 
-client_ws.on('open', () => {
-    client_ws.send("Hello from main")
-})
+
 
 function createWindow() {
     window = new BrowserWindow({
@@ -34,45 +39,28 @@ function createWindow() {
 }
 
 
-ipcMain.on('openFile', (event, path) => {
+function handleOpenFile(event, path) {
     const { dialog } = require('electron')
     const fs = require('fs')
 
-    dialog.showOpenDialog(
-        {
-            filters: [
-                { name: 'Images', extensions: ['jpg', 'png'] },
-            ],
-            properties: ['openFile']
-        },
-        (filenames) => {
-            if (!filenames || filenames.length === 0) {
-                return
-            }
+    const options = {}
+    options.filters = [{ name: 'Images', extensions: ['jpg', 'png'] }]
+    options.properties = ['openFile']
 
-            const filepath = filenames[0]
-
-            // read the file here
-            fs.readFile(filepath, (err, data) => {
-                if (err) {
-                    alert(`An error occured reading the file: ${err.message}`)
-                    return
-                }
-
-                // Grab the image type as metadata
-                index = filepath.lastIndexOf('.')
-                extension = filepath.slice(index + 1)
-
-                // Send over byte array and mimetype
-                event.sender.send('fileData', {
-                    data: data,
-                    mimetype: `image/${extension}`
-                })
-            })
+    const filesnames = dialog.showOpenDialog(options, (filenames) => {
+        if (!filenames || !Array.isArray(filenames) || filenames.length === 0) {
+            return
         }
-    );
-})
 
+        const filepath = filenames[0]
+        const index = filepath.lastIndexOf('.')
+        const extension = filepath.slice(index + 1)
 
-// Wait until the app is ready
-app.once('ready', createWindow)
+        const data = fs.readFileSync(filepath)
+
+        event.sender.send('fileData', {
+            data: data,
+            mimetype: `image/${extension}`
+        })
+    })
+}
