@@ -5,32 +5,55 @@
     <meta charset="UTF-8">
     <title>Hello World!</title>
     <style>
-        #uploadImageContainer {
-            display: block;
-            height: 256px;
-            width: 256px;
-            background: #fff;
+        .container {
+            display: flex;
+        }
+
+        .img-area {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 568px;
+            width: 47%;
+        }
+
+        .image-container {
+            height: 360px;
+            width: 520px;
+        }
+
+
+        img {
+            height: inherit;
+            width: inherit;
         }
     </style>
     <script src="src/js/main.js"></script>
 </head>
 
 <body>
-    <h1>Hello World!</h1>
     We are using node
     <script>document.write(process.versions.node)</script>,
     Chrome
     <script>document.write(process.versions.chrome)</script>,
     and Electron
     <script>document.write(process.versions.electron)</script>.
-    <button id="fileDialog">
-        Click me
-    </button>
 
-    <div id='uploadImageContainer'>
-        <img id="uploadImage" src="" alt="upload image">
+    <div class='container'>
+        <div class='img-area half-screen'>
+            <div class='image-container'>
+                <img id='upload-image' src='https://via.placeholder.com/150' alt='upload image'>
+                <button id='upload-btn'>Upload Image</button>
+            </div>
+        </div>
+
+        <div class='img-area half-screen'>
+            <div class='image-container'>
+                <img id='transformed-image' src='https://via.placeholder.com/150' alt='transformed image'>
+                <button id='save-btn'>Save!</button>
+            </div>
+        </div>
     </div>
-    <div></div>
 </body>
 
 </html>

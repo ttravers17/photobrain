@@ -4,6 +4,17 @@ const url = require('url')
 
 let window = null
 
+// Load all environment variables on application startup
+require('dotenv').config({
+    path: path.join(__dirname, '..', '..', '.env')
+})
+
+
+let client_ws = require('./client');
+
+client_ws.on('open', () => {
+    client_ws.send("Hello from main")
+})
 
 function createWindow() {
     window = new BrowserWindow({

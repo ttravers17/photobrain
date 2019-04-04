@@ -2,17 +2,15 @@ const { ipcRenderer } = require('electron')
 
 window.onload = function () {
 
-    const fileDialogBtn = document.getElementById("fileDialog")
-    const uploadImageContainer = document.getElementById("uploadImageContainer")
-    const uploadImage = document.getElementById("uploadImage")
+    const uploadBtn = document.getElementById("upload-btn")
+    const uploadImage = document.getElementById("upload-image")
 
 
-    fileDialogBtn.addEventListener('click', () => {
+    uploadBtn.addEventListener('click', () => {
         ipcRenderer.send('openFile')
 
 
         ipcRenderer.on('fileData', async (event, fileData) => {
-            // TODO: dynamically grab mimetype
             let blob = new Blob([fileData.data], { type: fileData.mimetype })
 
             const dataURL = await blobToDataURL(blob).catch((e) => {
