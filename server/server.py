@@ -34,13 +34,13 @@ async def receive_image_transform_request(websocket: websockets.WebSocketCommonP
 
     # Do transform
     transformed, ok = do_transform('rotate90', image_matrix)
-    encoded = im_2_b64(transformed)
+    # encoded = im_2_b64(transformed)
 
     return_buffer = io.BytesIO()
-    transformed.save(return_buffer, 'JPEG')
+    transformed.save(return_buffer, format='JPEG')
 
     if ok:
-        await websocket.send(encoded)
+        await websocket.send(return_buffer.getvalue())
 
     print("Completed image transformation and sent to client")
 

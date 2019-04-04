@@ -21,6 +21,7 @@ window.onload = function () {
         let blob = new Blob([data], { type: 'image/jpg' });
         const dataURL = await blobToDataURL(blob).catch(console.error)
 
+
         transformedImage.src = dataURL
     })
 
