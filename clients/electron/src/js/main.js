@@ -6,6 +6,8 @@ const ws = new WebSocket(`ws://localhost:${WEBSOCKET_PORT}`, {
 });
 
 let DATASTORE = {
+    TRANSFORM: '',
+    TRANSFORM_LENGTH: 60,
     CURRENT_IMAGE: {
         buffer: new Uint8Array(),
         mimetype: 'image/jpeg',
@@ -27,6 +29,12 @@ window.onload = function () {
     const transformedImage = document.getElementById('transformed-image')
     const saveBtn = document.getElementById('save-btn')
     const transformBtn = document.getElementById('transform-btn')
+    const transformsContainer = document.getElementById('transforms-container')
+    // get reference to input elements in toppings container element
+    let transforms = transformsContainer.getElementsByTagName('input');
+    registerTransformClickHandlers(transforms)
+
+
 
     // When message received update transform data and render image
     ws.on('message', async (data) => {
@@ -60,8 +68,13 @@ window.onload = function () {
                 return;
             }
 
+            // Data is a uint array, we need to decorate this with empty data
+            var dataPadded = new Uint8Array(DATASTORE.TRANSFORM_LENGTH + data.length)
+            // transform_length start of array is 0s
+            dataPadded.set(data, DATASTORE.TRANSFORM_LENGTH)
+
             // Set our datastore to be used by transform
-            DATASTORE.CURRENT_IMAGE.buffer = data
+            DATASTORE.CURRENT_IMAGE.buffer = dataPadded
             DATASTORE.CURRENT_IMAGE.mimetype = mimetype
             DATASTORE.CURRENT_IMAGE.dataURL = dataURL
             DATASTORE.CURRENT_IMAGE.uploaded = true
@@ -73,11 +86,33 @@ window.onload = function () {
 
     // Send transform to server/model for processing
     transformBtn.addEventListener('click', async () => {
-        if (DATASTORE.CURRENT_IMAGE.uploaded) {
+        if (DATASTORE.CURRENT_IMAGE.uploaded && DATASTORE.TRANSFORM) {
+            // clear out previous buffer metadata before writing new
+            zeroOut(DATASTORE.CURRENT_IMAGE.buffer, DATASTORE.TRANSFORM_LENGTH)
+            // copy over transform string as ascii characters to image buffer
+            for (let i = 0; i < DATASTORE.TRANSFORM.length; i++) {
+                DATASTORE.CURRENT_IMAGE.buffer[i] = DATASTORE.TRANSFORM.charCodeAt(i)
+            }
+
             ws.send(DATASTORE.CURRENT_IMAGE.buffer);
         }
     });
 
+    function zeroOut(buffer, size, offset = 0) {
+        for (let i = 0; i < size; i++) {
+            buffer[i] = 0;
+        }
+    }
+
+    function registerTransformClickHandlers(transformEls) {
+        for (let i = 0; i < transformEls.length; i++) {
+            if (transformEls[i].type === 'radio') {
+                transformEls[i].addEventListener('click', ({ srcElement }) => {
+                    DATASTORE.TRANSFORM = srcElement.value;
+                });
+            }
+        }
+    }
 
     function blobToDataURL(blob) {
         return new Promise((fulfill, reject) => {

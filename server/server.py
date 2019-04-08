@@ -24,8 +24,8 @@ def transform_router(transform: str, image: any, **kwargs) -> Tuple[any, bool]:
         return image
 
     routes = {
-        'nothing': do_nothing,
-        'rotate90': do_rotate
+        'NOTHING': do_nothing,
+        'ROTATE45': do_rotate
     }
 
     transform_fn = routes.get(transform)
@@ -46,7 +46,7 @@ def create_PIL_image_from_buffer(image_buffer):
 
 def create_buffer_from_PIL_image(transformed_image):
     buffer = io.BytesIO()
-    transformed_image.save(buffer, format='JPEG')
+    transformed_image.save(buffer, format='JPEG', subsampling=0, quality=100)
     return buffer
 
 
@@ -56,11 +56,17 @@ async def receive_image_transform_request(websocket: websockets.WebSocketCommonP
         image_buffer = await websocket.recv()
         print("Received image buffer")
 
+        # grab first 60 ints from buffer for transform
+        transform_bytes = image_buffer[:60]
+        transform = ''.join(chr(b) for b in transform_bytes if b != 0)
+        print("transform:", transform)
+        image_buffer = image_buffer[60:]
+
         image_matrix = create_PIL_image_from_buffer(image_buffer)
         print("Array made from buffer")
 
         # Do transform
-        transformed, ok = transform_router('nothing', image_matrix)
+        transformed, ok = transform_router(transform, image_matrix)
 
         if not ok:
             print("An error occured")
@@ -73,7 +79,7 @@ async def receive_image_transform_request(websocket: websockets.WebSocketCommonP
 if __name__ == '__main__':
     start_server = websockets.serve(
         receive_image_transform_request,
-        'localhost',
+        os.getenv("HOST"),
         os.getenv("WEBSOCKET_PORT")
     )
 
